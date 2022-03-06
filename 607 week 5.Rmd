@@ -1,0 +1,83 @@
+---
+title: "607 Week 5"
+author: "Benson"
+date: "3/6/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(knitr)
+library(tidyverse)
+```
+
+## Read dataset
+
+```{r read}
+
+
+vaccination_DS <- read.csv(file="https://raw.githubusercontent.com/Benson90/607-Week-5/main/israeli_vaccination_data_analysis_start.csv",head = TRUE, sep=",") 
+#test reading file
+vaccination_DS[1:9,]
+```
+
+## Retrive dataset into dataframe
+
+
+```{r retrieve}
+vaccination_DS <- vaccination_DS[c(2,4),c(1:5)] %>% 
+  cbind(vaccination_DS[c(3,5),c(2:3)])
+
+names(vaccination_DS) <- c('age','not_vax','fully_vax','not_vax_severe','fully_vax_severe', 'not_vax_percent','fully_vax_percent')
+
+vaccination_DS
+
+```
+## Data type transformation
+
+```{r data type}
+vaccination_DS <- vaccination_DS %>%
+  transmute(
+    age,
+    not_vax = as.integer(str_replace_all(not_vax,',','')),
+    fully_vax = as.integer(str_replace_all(fully_vax,',','')),
+    not_vax_severe = as.integer(not_vax_severe),
+    fully_vax_severe = as.integer(fully_vax_severe),
+    not_vax_percent = as.numeric(str_replace(not_vax_percent,'%','')),
+    fully_vax_percent = as.numeric(str_replace(fully_vax_percent,'%',''))
+  )
+vaccination_DS
+```
+## Add variable into data frame
+
+```{r mutate}
+vaccination_DS <- vaccination_DS %>%
+  mutate(population = round((not_vax + fully_vax)/(not_vax_percent+fully_vax_percent))) %>%
+  mutate(not_vax_severe_percent = round(not_vax_severe*100000/not_vax,2)) %>%
+  mutate(fully_vax_severe_percent = round(fully_vax_severe*100000/fully_vax,2)) %>%
+  mutate(Efficacy_vs_severe_desease_percent = round((1-(fully_vax_severe_percent/not_vax_severe_percent))*100,2)) %>%
+  mutate(severe_cases_not_vax_vs_fully_vax = round(not_vax_severe_percent/fully_vax_severe_percent,2))
+  
+  
+
+vaccination_DS
+sum(vaccination_DS$population)
+
+
+
+
+
+```
+## Question:
+
+### (1) Do you have enough information to calculate the total population?  What does this total population represent?
+ - Yes, I have enough information to calculate the total population using the proportion method. This total population includes people who are not vaccinated, fully vaccinated, and not defined. 
+ 
+### (2) Calculate the Efficacy vs. Disease; Explain your results.
+  - The results show efficacy vs. severe disease percent is high in both age ranges, which means the vaccine effectively prevents severe disease. 
+  
+### (3) From your calculation of efficacy vs. disease, are you able to compare the rate of severe cases in unvaccinated individuals to that in vaccinated individuals?
+- Yes, I am able to compare the rate of severe cases in unvaccinated individuals to that in vaccinated individuals by using severe cases in unvaccinated individuals percentage divide severe cases in vaccinated individuals percentage.
